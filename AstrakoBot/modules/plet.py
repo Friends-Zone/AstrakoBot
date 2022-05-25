@@ -24,10 +24,11 @@ from AstrakoBot.modules.thonkify_dict import thonkifydict
 def plet(update: Update, context: CallbackContext):
     chat = update.effective_chat
     message = update.effective_message
-    if not message.reply_to_message:
-        msg = message.text.split(None, 1)[1]
-    else:
-        msg = message.reply_to_message.text
+    msg = (
+        message.reply_to_message.text
+        if message.reply_to_message
+        else message.text.split(None, 1)[1]
+    )
 
     # the processed photo becomes too long and unreadable + the telegram doesn't support any longer dimensions + you have the lulz.
     if (len(msg)) > 39:
@@ -72,9 +73,7 @@ def plet(update: Update, context: CallbackContext):
         delmsg = context.bot.send_sticker(chat_id=message.chat_id, sticker=buffer)
 
 
-    cleartime = get_clearcmd(chat.id, "fun")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat.id, "fun"):
         context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 

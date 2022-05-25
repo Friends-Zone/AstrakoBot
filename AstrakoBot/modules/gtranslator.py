@@ -12,12 +12,8 @@ from AstrakoBot.modules.sql.clear_cmd_sql import get_clearcmd
 def totranslate(update: Update, context: CallbackContext):
     message = update.effective_message
     chat = update.effective_chat
-    problem_lang_code = []
     text = ""
-    for key in LANGUAGES:
-        if "-" in key:
-            problem_lang_code.append(key)
-
+    problem_lang_code = [key for key in LANGUAGES if "-" in key]
     try:
         if message.reply_to_message:
             args = update.effective_message.text.split(None, 1)
@@ -99,9 +95,7 @@ def totranslate(update: Update, context: CallbackContext):
 
 def deletion(update: Update, context: CallbackContext, delmsg):
     chat = update.effective_chat
-    cleartime = get_clearcmd(chat.id, "tr")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat.id, "tr"):
         context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 

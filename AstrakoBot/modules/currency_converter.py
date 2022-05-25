@@ -51,9 +51,7 @@ def convert(update: Update, context: CallbackContext):
             parse_mode=ParseMode.MARKDOWN,
         )
 
-    cleartime = get_clearcmd(chat.id, "cash")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat.id, "cash"):
         context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 

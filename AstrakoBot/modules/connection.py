@@ -20,44 +20,42 @@ def allow_connections(update: Update, context: CallbackContext) -> str:
     chat = update.effective_chat
     args = context.args
 
-    if chat.type != chat.PRIVATE:
-        if len(args) >= 1:
-            var = args[0]
-            if var == "no":
-                sql.set_allow_connect_to_chat(chat.id, False)
-                send_message(
-                    update.effective_message,
-                    "Connection has been disabled for this chat",
-                )
-            elif var == "yes":
-                sql.set_allow_connect_to_chat(chat.id, True)
-                send_message(
-                    update.effective_message,
-                    "Connection has been enabled for this chat",
-                )
-            else:
-                send_message(
-                    update.effective_message,
-                    "Please enter `yes` or `no`!",
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-        else:
-            get_settings = sql.allow_connect_to_chat(chat.id)
-            if get_settings:
-                send_message(
-                    update.effective_message,
-                    "Connections to this group are *Allowed* for admins!",
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-            else:
-                send_message(
-                    update.effective_message,
-                    "Connection to this group are *Not Allowed* for admins!",
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-    else:
+    if chat.type == chat.PRIVATE:
         send_message(
             update.effective_message, "This command is for group only. Not in PM!"
+        )
+
+    elif len(args) >= 1:
+        var = args[0]
+        if var == "no":
+            sql.set_allow_connect_to_chat(chat.id, False)
+            send_message(
+                update.effective_message,
+                "Connection has been disabled for this chat",
+            )
+        elif var == "yes":
+            sql.set_allow_connect_to_chat(chat.id, True)
+            send_message(
+                update.effective_message,
+                "Connection has been enabled for this chat",
+            )
+        else:
+            send_message(
+                update.effective_message,
+                "Please enter `yes` or `no`!",
+                parse_mode=ParseMode.MARKDOWN,
+            )
+    elif get_settings := sql.allow_connect_to_chat(chat.id):
+        send_message(
+            update.effective_message,
+            "Connections to this group are *Allowed* for admins!",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+    else:
+        send_message(
+            update.effective_message,
+            "Connection to this group are *Not Allowed* for admins!",
+            parse_mode=ParseMode.MARKDOWN,
         )
 
 
@@ -118,10 +116,9 @@ def connect_chat(update: Update, context: CallbackContext):
             isallow = sql.allow_connect_to_chat(connect_chat)
 
             if (isadmin and isallow) or (user.id in SUDO_USERS):
-                connection_status = sql.connect(
+                if connection_status := sql.connect(
                     update.effective_message.from_user.id, connect_chat
-                )
-                if connection_status:
+                ):
                     conn_chat = dispatcher.bot.getChat(
                         connected(context.bot, update, chat, user.id, need_admin=True)
                     )
@@ -153,12 +150,11 @@ def connect_chat(update: Update, context: CallbackContext):
                 ]
             else:
                 buttons = []
-            conn = connected(context.bot, update, chat, user.id, need_admin=True)
-            if conn:
+            if conn := connected(
+                context.bot, update, chat, user.id, need_admin=True
+            ):
                 connectedchat = dispatcher.bot.getChat(conn)
-                text = "You are currently connected to *{}* (`{}`)".format(
-                    connectedchat.title, conn
-                )
+                text = f"You are currently connected to *{connectedchat.title}* (`{conn}`)"
                 buttons.append(
                     InlineKeyboardButton(
                         text="🔌 Disconnect", callback_data="connect_disconnect"
@@ -182,17 +178,17 @@ def connect_chat(update: Update, context: CallbackContext):
                         [
                             InlineKeyboardButton(
                                 text=gethistory[x]["chat_name"],
-                                callback_data="connect({})".format(
-                                    gethistory[x]["chat_id"]
-                                ),
+                                callback_data=f'connect({gethistory[x]["chat_id"]})',
                             )
                         ]
                     )
+
                 text += "╘══「 Total {} Chats 」".format(
-                    str(len(gethistory)) + " (max)"
+                    f"{len(gethistory)} (max)"
                     if len(gethistory) == 5
                     else str(len(gethistory))
                 )
+
                 conn_hist = InlineKeyboardMarkup(buttons)
             elif buttons:
                 conn_hist = InlineKeyboardMarkup([buttons])
@@ -212,16 +208,16 @@ def connect_chat(update: Update, context: CallbackContext):
         isadmin = getstatusadmin.status in ("administrator", "creator")
         isallow = sql.allow_connect_to_chat(chat.id)
         if (isadmin and isallow) or (user.id in SUDO_USERS):
-            connection_status = sql.connect(
+            if connection_status := sql.connect(
                 update.effective_message.from_user.id, chat.id
-            )
-            if connection_status:
+            ):
                 chat_name = dispatcher.bot.getChat(chat.id).title
                 send_message(
                     update.effective_message,
-                    "Successfully connected to *{}*.".format(chat_name),
+                    f"Successfully connected to *{chat_name}*.",
                     parse_mode=ParseMode.MARKDOWN,
                 )
+
                 try:
                     sql.add_history_conn(user.id, str(chat.id), chat_name)
                     context.bot.send_message(
@@ -231,9 +227,7 @@ def connect_chat(update: Update, context: CallbackContext):
                         ),
                         parse_mode="markdown",
                     )
-                except BadRequest:
-                    pass
-                except Unauthorized:
+                except (BadRequest, Unauthorized):
                     pass
             else:
                 send_message(update.effective_message, "Connection failed!")
@@ -246,8 +240,9 @@ def connect_chat(update: Update, context: CallbackContext):
 def disconnect_chat(update: Update, context: CallbackContext):
 
     if update.effective_chat.type == "private":
-        disconnection_status = sql.disconnect(update.effective_message.from_user.id)
-        if disconnection_status:
+        if disconnection_status := sql.disconnect(
+            update.effective_message.from_user.id
+        ):
             sql.disconnected_chat = send_message(
                 update.effective_message, "Disconnected from chat!"
             )
@@ -334,15 +329,15 @@ def connect_button(update: Update, context: CallbackContext):
     connect_close = query.data == "connect_close"
 
     if connect_match:
-        target_chat = connect_match.group(1)
+        target_chat = connect_match[1]
         getstatusadmin = context.bot.get_chat_member(target_chat, query.from_user.id)
         isadmin = getstatusadmin.status in ("administrator", "creator")
         isallow = sql.allow_connect_to_chat(target_chat)
 
         if (isadmin and isallow) or (user.id in SUDO_USERS):
-            connection_status = sql.connect(query.from_user.id, target_chat)
-
-            if connection_status:
+            if connection_status := sql.connect(
+                query.from_user.id, target_chat
+            ):
                 conn_chat = dispatcher.bot.getChat(
                     connected(context.bot, update, chat, user.id, need_admin=True)
                 )
@@ -361,8 +356,7 @@ def connect_button(update: Update, context: CallbackContext):
                 query.id, "You are not allowed to connect to this chat!", show_alert=True
             )
     elif disconnect_match:
-        disconnection_status = sql.disconnect(query.from_user.id)
-        if disconnection_status:
+        if disconnection_status := sql.disconnect(query.from_user.id):
             sql.disconnected_chat = query.message.edit_text("Disconnected from chat!")
         else:
             context.bot.answer_callback_query(

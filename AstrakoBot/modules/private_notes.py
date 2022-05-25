@@ -41,8 +41,7 @@ def setprivatenotes(chat_id, setting):
             
 
 def getprivatenotes(chat_id):
-    setting = sql.get_private_notes(chat_id)
-    return setting
+    return sql.get_private_notes(chat_id)
 
 
 def __migrate__(old_chat_id, new_chat_id):

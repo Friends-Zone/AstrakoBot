@@ -31,16 +31,15 @@ def send_rules(update, chat_id, from_pm=False):
     try:
         chat = bot.get_chat(chat_id)
     except BadRequest as excp:
-        if excp.message == "Chat not found" and from_pm:
-            bot.send_message(
-                user.id,
-                "The rules shortcut for this chat hasn't been set properly! Ask admins to "
-                "fix this.\nMaybe they forgot the hyphen in ID",
-            )
-            return
-        else:
+        if excp.message != "Chat not found" or not from_pm:
             raise
 
+        bot.send_message(
+            user.id,
+            "The rules shortcut for this chat hasn't been set properly! Ask admins to "
+            "fix this.\nMaybe they forgot the hyphen in ID",
+        )
+        return
     rules = sql.get_rules(chat_id)
     text = f"The rules for *{escape_markdown(chat.title)}* are:\n\n{rules}"
     try:
@@ -55,18 +54,18 @@ def send_rules(update, chat_id, from_pm=False):
         bot.send_message(
             user.id, text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
         )
-    elif from_pm and fed_id and frules and not rules:
+    elif from_pm and fed_id and frules:
         ftext = f" The admins of *{escape_markdown(chat.title)}* haven't set any rules yet.\n*Reverting to the rules set by the fed admins:*\n\n {frules}"
         bot.send_message(
             user.id, ftext, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
         )
-    elif from_pm and fed_id and not frules and not rules:
+    elif from_pm and fed_id:
         bot.send_message(
             user.id,
             "The group admins haven't set any rules for this chat yet. "
             "This probably doesn't mean it's lawless though...!",
         )
-    elif from_pm and not fed_id and not rules:
+    elif from_pm:
         bot.send_message(
             user.id,
             "The group admins haven't set any rules for this chat yet. "
@@ -98,7 +97,7 @@ def send_rules(update, chat_id, from_pm=False):
                 ]
             ),
         )
-    elif fed_id and frules and not rules:
+    elif fed_id and frules:
         update.effective_message.reply_text(
             "The group admins haven't set any rules for this chat yet.\nPlease click the button below to see the fed rules.",
             reply_markup=InlineKeyboardMarkup(

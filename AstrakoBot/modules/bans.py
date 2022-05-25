@@ -263,8 +263,7 @@ def punch(update: Update, context: CallbackContext) -> str:
         message.reply_text("I really wish I could punch this user....")
         return log_message
 
-    res = chat.unban_member(user_id)  # unban on current user = kick
-    if res:
+    if res := chat.unban_member(user_id):
         reply = (
             f"<code>❕</code><b>Punch Event</b>\n"
             f"<code> </code><b>•  User:</b> {mention_html(member.user.id, html.escape(member.user.first_name))}\n"
@@ -298,8 +297,7 @@ def punchme(update: Update, context: CallbackContext):
         update.effective_message.reply_text("I wish I could... but you're an admin.")
         return
 
-    res = update.effective_chat.unban_member(user_id)  # unban on current user = kick
-    if res:
+    if res := update.effective_chat.unban_member(user_id):
         update.effective_message.reply_text("Punches you out of the group")
     else:
         update.effective_message.reply_text("Huh? I can't :/")

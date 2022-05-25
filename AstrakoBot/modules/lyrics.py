@@ -11,12 +11,10 @@ from AstrakoBot.modules.helper_funcs.misc import delete
 def lyrics(update: Update, context: CallbackContext):
     message = update.effective_message
     chat = update.effective_chat
-    query = message.text[len("/lyrics ") :]
     song = ""
 
-    if query:
-        song = Song.find_song(query)
-        if song:
+    if query := message.text[len("/lyrics ") :]:
+        if song := Song.find_song(query):
             if song.lyrics:
                 msg = song.format()
             else:
@@ -36,9 +34,7 @@ def lyrics(update: Update, context: CallbackContext):
         disable_web_page_preview = True,
     )
 
-    cleartime = get_clearcmd(chat.id, "lyrics")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat.id, "lyrics"):
         context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 

@@ -41,11 +41,10 @@ async def purge_messages(event):
     if not reply_msg:
         await event.reply("Reply to a message to select where to start purging from.")
         return
-    messages = []
     message_id = reply_msg.id
     delete_to = event.message.id
 
-    messages.append(event.reply_to_msg_id)
+    messages = [event.reply_to_msg_id]
     for msg_id in range(message_id, delete_to + 1):
         messages.append(msg_id)
         if len(messages) == 100:
@@ -59,10 +58,8 @@ async def purge_messages(event):
     time_ = time.perf_counter() - start
     text = f"Purged Successfully in {time_:0.2f} Second(s)"
     delmsg = await event.respond(text, parse_mode="markdown")
-    
-    cleartime = get_clearcmd(event.chat_id, "purge")
 
-    if cleartime:
+    if cleartime := get_clearcmd(event.chat_id, "purge"):
         await sleep(cleartime.time)
         await delmsg.delete()
 
@@ -86,9 +83,11 @@ async def delete_messages(event):
     me = await telethn.get_me()
     BOT_ID = me.id
 
-    if not await can_delete_messages(message=event)\
-        and message\
-            and not int(message.sender.id) == int(BOT_ID):
+    if (
+        not await can_delete_messages(message=event)
+        and message
+        and int(message.sender.id) != int(BOT_ID)
+    ):
         if event.chat.admin_rights is None:
             return await event.reply(
                 "I'm not an admin, do you mind promoting me first?"
@@ -108,8 +107,7 @@ async def delete_messages(event):
     try:
         await event.client.delete_messages(chat, event.message)
     except MessageDeleteForbiddenError:
-        print("error in deleting message {} in {}".format(event.message.id, event.chat.id))
-        pass
+        print(f"error in deleting message {event.message.id} in {event.chat.id}")
 
 
 __help__ = """

@@ -397,7 +397,7 @@ def adminlist(update: Update, context: CallbackContext):
         )
 
     administrators = bot.getChatAdministrators(chat_id)
-    text = "Admins in <b>{}</b>:".format(html.escape(update.effective_chat.title))
+    text = f"Admins in <b>{html.escape(update.effective_chat.title)}</b>:"
 
     bot_admin_list = []
 
@@ -411,9 +411,13 @@ def adminlist(update: Update, context: CallbackContext):
         else:
             name = "{}".format(
                 mention_html(
-                    user.id, html.escape(user.first_name + " " + (user.last_name or ""))
+                    user.id,
+                    html.escape(
+                        f"{user.first_name} " + ((user.last_name or ""))
+                    ),
                 )
             )
+
 
         if user.is_bot:
             bot_admin_list.append(name)
@@ -444,17 +448,19 @@ def adminlist(update: Update, context: CallbackContext):
         else:
             name = "{}".format(
                 mention_html(
-                    user.id, html.escape(user.first_name + " " + (user.last_name or ""))
+                    user.id,
+                    html.escape(
+                        f"{user.first_name} " + ((user.last_name or ""))
+                    ),
                 )
             )
-        # if user.username:
-        #    name = escape_markdown("@" + user.username)
+
         if status == "administrator":
             if custom_title:
                 try:
                     custom_admin_list[custom_title].append(name)
                 except KeyError:
-                    custom_admin_list.update({custom_title: [name]})
+                    custom_admin_list[custom_title] = [name]
             else:
                 normal_admin_list.append(name)
 

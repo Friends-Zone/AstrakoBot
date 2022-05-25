@@ -25,11 +25,7 @@ def generate_time(to_find: str, findtype: List[str]) -> str:
                 country_zone = zone["zoneName"]
                 country_code = zone["countryCode"]
 
-                if zone["dst"] == 1:
-                    daylight_saving = "Yes"
-                else:
-                    daylight_saving = "No"
-
+                daylight_saving = "Yes" if zone["dst"] == 1 else "No"
                 date_fmt = r"%d-%m-%Y"
                 time_fmt = r"%H:%M:%S"
                 day_fmt = r"%A"
@@ -92,9 +88,7 @@ def gettime(update: Update, context: CallbackContext):
         result, parse_mode=ParseMode.HTML, disable_web_page_preview=True
     )
 
-    cleartime = get_clearcmd(chat.id, "time")
-
-    if cleartime:
+    if cleartime := get_clearcmd(chat.id, "time"):
         context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 

@@ -43,12 +43,9 @@ def afk(update: Update, context: CallbackContext):
     sql.set_afk(update.effective_user.id, reason)
     fname = update.effective_user.first_name
     try:
-        delmsg = update.effective_message.reply_text(
-            "{} is now away!{}".format(fname, notice))
+        delmsg = update.effective_message.reply_text(f"{fname} is now away!{notice}")
 
-        cleartime = get_clearcmd(chat.id, "afk")
-
-        if cleartime:
+        if cleartime := get_clearcmd(chat.id, "afk"):
             context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
     except BadRequest:
@@ -63,8 +60,7 @@ def no_longer_afk(update: Update, context: CallbackContext):
     if not user:  # ignore channels
         return
 
-    res = sql.rm_afk(user.id)
-    if res:
+    if res := sql.rm_afk(user.id):
         if message.new_chat_members:  # dont say msg
             return
         firstname = update.effective_user.first_name
@@ -83,9 +79,7 @@ def no_longer_afk(update: Update, context: CallbackContext):
             delmsg = update.effective_message.reply_text(
                 chosen_option.format(firstname))
 
-            cleartime = get_clearcmd(chat.id, "afk")
-
-            if cleartime:
+            if cleartime := get_clearcmd(chat.id, "afk"):
                 context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
         except:
@@ -130,7 +124,7 @@ def reply_afk(update: Update, context: CallbackContext):
             try:
                 chat = bot.get_chat(user_id)
             except BadRequest:
-                print("Error: Could not fetch userid {} for AFK module".format(user_id))
+                print(f"Error: Could not fetch userid {user_id} for AFK module")
                 return
             fst_name = chat.first_name
 
@@ -147,24 +141,23 @@ def check_afk(update: Update, context: CallbackContext, user_id: int, fst_name: 
     if sql.is_afk(user_id):
         user = sql.check_afk_status(user_id)
 
-        if int(userc_id) == int(user_id):
+        if userc_id == user_id:
             return
 
         time = humanize.naturaldelta(datetime.now() - user.time)
 
-        if not user.reason:
-            res = f"{fst_name} is *afk*.\nLast seen: `{time} ago`"
-        else:
-            res = f"{fst_name} is *afk*.\nReason: `{user.reason}`\nLast seen: `{time} ago`"
+        res = (
+            f"{fst_name} is *afk*.\nReason: `{user.reason}`\nLast seen: `{time} ago`"
+            if user.reason
+            else f"{fst_name} is *afk*.\nLast seen: `{time} ago`"
+        )
 
         delmsg = update.effective_message.reply_text(
         res,
         parse_mode = ParseMode.MARKDOWN,
         )
 
-        cleartime = get_clearcmd(chat.id, "afk")
-
-        if cleartime:
+        if cleartime := get_clearcmd(chat.id, "afk"):
             context.dispatcher.run_async(delete, delmsg, cleartime.time)
 
 
